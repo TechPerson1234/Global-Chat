@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <title>Global Chat | math12393</title>
+
+    <!-- PWA Manifest & Theme -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4361ee">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+        body{
+            font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+            background:linear-gradient(135deg,#667eea,#764ba2);
+            height: calc(var(--vh, 1vh) * 100);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            overflow:hidden;
+        }
+        .chat-container{
+            width:100%;
+            max-width:600px;
+            height:100%;
+            background:#fff;
+            display:flex;
+            flex-direction:column;
+            box-shadow:0 0 20px rgba(0,0,0,0.1);
+            position:relative;
+        }
+        .chat-header{
+            background:linear-gradient(135deg,#4361ee,#7209b7);
+            color:#fff;
+            padding-top: max(16px, env(safe-area-inset-top));
+            padding-bottom:12px;
+            padding-left: max(12px, env(safe-area-inset-left));
+            padding-right: max(12px, env(safe-area-inset-right));
+            display:flex;
+            align-items:center;
+            gap:10px;
+            flex-wrap:wrap;
+            position:relative;
+            flex-shrink:0;
+            min-height:70px;
+        }
+        .logo{display:flex;align-items:center;gap:8px}
+        .logo i{font-size:1.5rem}
+        .logo h1{font-size:1.2rem}
+        .name-section{flex:1 1 auto;min-width:120px;max-width:100%}
+        .name-input-wrapper{
+            display:flex;
+            background:rgba(255,255,255,0.35);
+            border-radius:30px;
+            padding:5px 10px;
+            gap:8px;
+            max-width:100%;
+        }
+        #nameInput{
+            flex:1 1 auto;
+            min-width:0;
+            background:0 0;
+            border:none;
+            color:#fff;
+            padding:8px;
+            outline:none;
+            font-size:1rem;
+            font-weight:500;
+        }
+        #nameInput::placeholder{color:rgba(255,255,255,0.9);font-weight:400}
+        .save-btn{
+            background:#38b000;
+            border:none;
+            width:40px;
+            height:40px;
+            border-radius:50%;
+            color:#fff;
+            cursor:pointer;
+            font-size:1.1rem;
+            flex-shrink:0;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+        }
+        .name-status{
+            font-size:0.75rem;
+            font-weight:500;
+            margin-top:4px;
+            padding:4px 8px;
+            background:rgba(0,0,0,0.15);
+            border-radius:10px;
+            display:inline-block;
+            min-height:1.2em;
+            line-height:1.3;
+            white-space:nowrap;
+        }
+        .reload-btn,.install-btn,.refresh-btn{
+            background:rgba(255,255,255,0.2);
+            border:none;
+            width:36px;
+            height:36px;
+            border-radius:50%;
+            color:#fff;
+            cursor:pointer;
+            flex-shrink:0;
+        }
+        .refresh-btn{ background: #38b000; display:none; }
+        .messages-container{
+            flex:1;
+            overflow-y:auto;
+            padding:16px;
+            display:flex;
+            flex-direction:column;
+            gap:12px;
+            background:#f8f9fa;
+            -webkit-overflow-scrolling:touch;
+        }
+        .message{max-width:80%;animation:fadeIn .2s ease}
+        .message.mine{align-self:flex-end}
+        .message.other{align-self:flex-start}
+        .message-header{font-size:.75rem;margin-bottom:4px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+        .message-sender{font-weight:bold;color:#4361ee}
+        .message-sender.me{color:#38b000}
+        .message-time{color:#6c757d;font-size:.7rem}
+        .message-content{padding:8px 12px;border-radius:18px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.1);word-wrap:break-word}
+        .mine .message-content{background:linear-gradient(135deg,#4361ee,#7209b7);color:#fff}
+        .message-image{max-width:200px;max-height:150px;border-radius:12px;margin-top:6px;cursor:pointer}
+        .edited-badge{font-size:.65rem;opacity:.7;margin-left:6px;font-style:italic}
+        .message-menu-btn{background:0 0;border:none;cursor:pointer;color:#6c757d;margin-left:4px;padding:4px;border-radius:50%}
+        .input-section{
+            background:#fff;
+            padding:12px;
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+            border-top:1px solid #dee2e6;
+            flex-shrink:0;
+        }
+        .image-preview-area{background:#f1f3f5;border-radius:12px;padding:8px;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+        .image-preview{position:relative;width:50px;height:50px}
+        .image-preview img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+        .cancel-image-btn{position:absolute;top:-8px;right:-8px;background:#f72585;border:none;border-radius:50%;width:20px;height:20px;color:#fff;cursor:pointer;font-size:12px}
+        .input-wrapper{display:flex;gap:10px;align-items:center}
+        .image-picker-btn{background:#e9ecef;border:none;width:44px;height:44px;border-radius:50%;cursor:pointer;color:#4361ee;font-size:1.2rem}
+        #messageInput{
+            flex:1;
+            padding:12px;
+            border:2px solid #e9ecef;
+            border-radius:30px;
+            outline:none;
+            font-size:16px;
+        }
+        .send-btn{background:linear-gradient(135deg,#4361ee,#7209b7);border:none;width:44px;height:44px;border-radius:50%;color:#fff;cursor:pointer}
+        .char-count{font-size:.7rem;color:#6c757d;margin-left:8px}
+
+        /* ========== LIGHTBOX (bottom toolbar) ========== */
+        .lightbox{
+            position:fixed;top:0;left:0;width:100%;height:100%;
+            background:rgba(0,0,0,0.95);z-index:2000;
+            display:flex;flex-direction:column;justify-content:center;align-items:center;
+        }
+        .lightbox-content{
+            display:flex;justify-content:center;align-items:center;
+            width:100%;height:calc(100% - 120px);
+        }
+        .lightbox-content img{
+            max-width:90%;max-height:90%;
+            object-fit:contain;
+        }
+        .lightbox-toolbar{
+            position:absolute;bottom:30px;left:0;right:0;
+            display:flex;justify-content:center;gap:24px;
+            padding:0 20px;
+        }
+        .lightbox-toolbar button{
+            background:rgba(255,255,255,0.25);
+            border:none;width:56px;height:56px;
+            border-radius:50%;color:#fff;font-size:1.5rem;
+            cursor:pointer;
+            display:flex;align-items:center;justify-content:center;
+            backdrop-filter:blur(10px);
+            -webkit-backdrop-filter:blur(10px);
+        }
+        .lightbox-toolbar button:active{transform:scale(0.92)}
+
+        /* ========== MODALS ========== */
+        .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:3000;display:flex;justify-content:center;align-items:center}
+        .modal-box{background:#fff;border-radius:20px;padding:24px;width:90%;max-width:350px;text-align:center}
+        .modal-box textarea{width:100%;padding:12px;margin:16px 0;border:2px solid #e9ecef;border-radius:12px;font-size:16px;font-family:inherit}
+        .modal-buttons{display:flex;gap:12px;justify-content:center}
+        .modal-buttons button{padding:8px 20px;border:none;border-radius:30px;cursor:pointer}
+        .modal-confirm{background:#4361ee;color:#fff}
+        .modal-cancel{background:#e9ecef}
+
+        /* ========== TOAST ========== */
+        .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;padding:8px 16px;border-radius:30px;font-size:.9rem;z-index:4000;opacity:0;transition:.2s;pointer-events:none}
+        .toast.show{opacity:1}
+
+        /* ========== FAILED MESSAGE STYLE ========== */
+        .message.failed .message-content{background:#adb5bd;color:#fff;opacity:0.7}
+        .retry-btn{background:#f72585;border:none;width:24px;height:24px;border-radius:50%;color:#fff;cursor:pointer;margin-left:4px}
+
+        @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+        button:active{transform:scale(0.96)}
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 400px) {
+            .chat-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 4px;
+                padding-top: max(12px, env(safe-area-inset-top));
+                padding-bottom: 8px;
+                padding-left: max(12px, env(safe-area-inset-left));
+                padding-right: max(50px, calc(env(safe-area-inset-right) + 50px));
+            }
+            .name-section{min-width:100%;order:1;max-width:100%}
+            .logo{order:0;font-size:1rem}
+            .reload-btn,.install-btn,.refresh-btn{
+                position:absolute;
+                top: max(12px, env(safe-area-inset-top));
+                right: max(12px, env(safe-area-inset-right));
+                align-self:auto;
+                z-index:5;
+            }
+            .install-btn{
+                right: max(55px, calc(env(safe-area-inset-right) + 55px));
+            }
+            .refresh-btn{
+                right: max(95px, calc(env(safe-area-inset-right) + 95px));
+            }
+            .name-status{font-size:0.65rem}
+        }
+    </style>
+</head>
+<body>
+<div class="chat-container">
+    <div class="chat-header">
+        <div class="logo"><i class="fas fa-comments"></i><h1>Global Chat</h1></div>
+        <div class="name-section">
+            <div class="name-input-wrapper">
+                <i class="fas fa-user"></i>
+                <input type="text" id="nameInput" placeholder="Your name..." maxlength="30">
+                <button id="saveNameBtn" class="save-btn"><i class="fas fa-check"></i></button>
+            </div>
+            <div class="name-status" id="nameStatus">
+                <i class="fas fa-info-circle"></i> <span>Enter your name to chat</span>
+            </div>
+        </div>
+        <button id="refreshBtn" class="refresh-btn"><i class="fas fa-arrow-down"></i></button>
+        <button id="reloadPageBtn" class="reload-btn"><i class="fas fa-sync-alt"></i></button>
+        <button id="installBtn" class="install-btn" style="display:none"><i class="fas fa-download"></i></button>
+    </div>
+    <div class="messages-container" id="messagesContainer">
+        <div style="text-align:center;padding:30px"><i class="fas fa-comment-dots"></i><h3>Welcome!</h3><p>Enter your name to start chatting.</p></div>
+    </div>
+    <div class="input-section">
+        <div class="image-preview-area" id="imagePreviewArea" style="display:none">
+            <div class="image-preview"><img id="previewImg"><button class="cancel-image-btn" id="cancelImageBtn"><i class="fas fa-times"></i></button></div>
+            <div><span id="previewFileName"></span> <span id="previewSize"></span></div>
+        </div>
+        <div class="input-wrapper">
+            <button id="imagePickerBtn" class="image-picker-btn"><i class="fas fa-image"></i></button>
+            <input type="file" id="imageFileInput" accept="image/*" style="display:none">
+            <input type="text" id="messageInput" placeholder="Type a message..." maxlength="500" disabled>
+            <div style="display:flex;align-items:center;gap:5px">
+                <span class="char-count" id="charCount">0/500</span>
+                <button id="sendBtn" class="send-btn" disabled><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== LIGHTBOX (bottom toolbar) ========== -->
+<div id="lightbox" class="lightbox" style="display:none">
+    <div class="lightbox-content"><img id="lightboxImg"></div>
+    <div class="lightbox-toolbar">
+        <button class="lightbox-share"><i class="fas fa-share-alt"></i></button>
+        <button class="lightbox-download"><i class="fas fa-arrow-down"></i></button>
+        <button class="lightbox-close"><i class="fas fa-times"></i></button>
+    </div>
+</div>
+
+<div id="editModal" class="modal-overlay" style="display:none">
+    <div class="modal-box"><h3>Edit Message</h3><textarea id="editInput" rows="3" placeholder="Edit your message..."></textarea><div class="modal-buttons"><button id="editConfirmBtn" class="modal-confirm">Save</button><button id="editCancelBtn" class="modal-cancel">Cancel</button></div></div>
+</div>
+<div id="deleteModal" class="modal-overlay" style="display:none">
+    <div class="modal-box"><h3>Delete Message</h3><p>Are you sure you want to permanently delete this message?</p><div class="modal-buttons"><button id="deleteConfirmBtn" class="modal-confirm">Delete</button><button id="deleteCancelBtn" class="modal-cancel">Cancel</button></div></div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+// ==================== SUPABASE ====================
+const _SUPABASE_URL = 'https://mpxirhokmfvlpijjqstv.supabase.co';
+const _SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1weGlyaG9rbWZ2bHBpampxc3R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2NDA0MjQsImV4cCI6MjA5OTIxNjQyNH0.KHXjRtVKuQd07HLcrClSmGAOGbYxhZghV5kdldcZ3JI';
+const _supabase = window.supabase.createClient(_SUPABASE_URL, _SUPABASE_KEY);
+const STORAGE_BUCKET = 'chat-images';
+
+// ==================== PUSH NOTIFICATIONS ====================
+const VAPID_PUBLIC_KEY = 'BPGNixgR1xxYKgDhkNYeor0rRPGiLNFfh_jmjWE2B02xOF1iNq3O4Ehp4Pvim31iZkJlpshweqzLMImeBkJg1eg';
+let swRegistration = null;
+let isPushSubscribed = false;
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+async function subscribeToPush() {
+  if (!swRegistration) {
+    console.warn('Service Worker not registered yet');
+    showToast('Service Worker not ready. Try refreshing.');
+    return;
+  }
+
+  let permission = Notification.permission;
+  if (permission === 'denied') {
+    showToast('Notifications blocked. Enable in Settings.');
+    return;
+  }
+  if (permission === 'default') {
+    permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      showToast('Notification permission denied.');
+      return;
+    }
+  }
+
+  try {
+    const subscription = await swRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    console.log('Push subscription obtained:', subscription);
+
+    await saveSubscription(subscription);
+    isPushSubscribed = true;
+    showToast('🔔 Notifications enabled!');
+  } catch (err) {
+    console.error('Push subscription failed:', err);
+    showToast('Could not enable notifications. See console.');
+  }
+}
+
+async function saveSubscription(subscription) {
+  console.log('Saving subscription to Supabase...');
+  const { data, error } = await _supabase
+    .from('push_subscriptions')
+    .upsert({
+      session_id: currentSessionId,
+      endpoint: subscription.endpoint,
+      keys: subscription.toJSON().keys,
+      user_agent: navigator.userAgent,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'endpoint' });
+
+  if (error) {
+    console.error('Failed to save subscription:', error);
+    showToast('Failed to save subscription: ' + error.message);
+  } else {
+    console.log('Subscription saved successfully:', data);
+  }
+}
+
+async function updateBadgeCount() {
+  if (!navigator.setAppBadge) {
+    console.log('Badge API not supported');
+    return;
+  }
+
+  const lastSeen = localStorage.getItem('lastSeenTimestamp') || new Date(0).toISOString();
+  const { count, error } = await _supabase
+    .from('messages')
+    .select('*', { count: 'exact', head: true })
+    .gt('created_at', lastSeen)
+    .neq('session_id', currentSessionId);
+
+  if (error) {
+    console.error('Failed to count messages', error);
+    return;
+  }
+
+  if (count > 0) {
+    navigator.setAppBadge(count);
+  } else {
+    navigator.clearAppBadge();
+  }
+}
+
+// ==================== GLOBAL STATE ====================
+let currentUser = null;
+let currentSessionId = null;
+let currentImageFile = null;
+let activeMessageId = null;
+let realtimeChannel = null;
+let fallbackInterval = null;
+
+// DOM elements
+const nameInput = document.getElementById('nameInput');
+const saveNameBtn = document.getElementById('saveNameBtn');
+const nameStatus = document.getElementById('nameStatus');
+const messageInput = document.getElementById('messageInput');
+const sendMsgBtn = document.getElementById('sendBtn');
+const messagesDiv = document.getElementById('messagesContainer');
+const charCountSpan = document.getElementById('charCount');
+const imagePicker = document.getElementById('imagePickerBtn');
+const imageFile = document.getElementById('imageFileInput');
+const previewArea = document.getElementById('imagePreviewArea');
+const previewImg = document.getElementById('previewImg');
+const previewFileName = document.getElementById('previewFileName');
+const previewSize = document.getElementById('previewSize');
+const cancelImg = document.getElementById('cancelImageBtn');
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightboxImg');
+const lightboxClose = document.querySelector('.lightbox-close');
+const lightboxDownload = document.querySelector('.lightbox-download');
+const lightboxShare = document.querySelector('.lightbox-share');
+const toast = document.getElementById('toast');
+const reloadBtn = document.getElementById('reloadPageBtn');
+const refreshBtn = document.getElementById('refreshBtn');
+const installBtn = document.getElementById('installBtn');
+const editModal = document.getElementById('editModal');
+const editInput = document.getElementById('editInput');
+const editConfirm = document.getElementById('editConfirmBtn');
+const editCancel = document.getElementById('editCancelBtn');
+const deleteModal = document.getElementById('deleteModal');
+const deleteConfirm = document.getElementById('deleteConfirmBtn');
+const deleteCancel = document.getElementById('deleteCancelBtn');
+
+// ==================== iOS VIEWPORT HEIGHT FIX ====================
+function setVH() {
+    let vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+window.addEventListener('resize', setVH);
+window.addEventListener('orientationchange', setVH);
+setTimeout(setVH, 100);
+window.addEventListener('pageshow', setVH);
+setVH();
+
+// ==================== UTILITIES ====================
+function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+}
+
+function formatTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+}
+
+function scrollToBottom() {
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+// ==================== IMAGE HANDLING (with EXIF orientation fix) ====================
+function getOrientation(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const view = new DataView(e.target.result);
+            if (view.getUint16(0, false) != 0xFFD8) return resolve(1);
+            const length = view.byteLength;
+            let offset = 2;
+            while (offset < length) {
+                const marker = view.getUint16(offset, false);
+                offset += 2;
+                if (marker == 0xFFE1) {
+                    if (view.getUint32(offset += 2, false) != 0x45786966) return resolve(1);
+                    const little = view.getUint16(offset += 6, false) == 0x4949;
+                    offset += view.getUint32(offset + 4, little);
+                    const tags = view.getUint16(offset, little);
+                    offset += 2;
+                    for (let i = 0; i < tags; i++) {
+                        if (view.getUint16(offset + (i * 12), little) == 0x0112) {
+                            return resolve(view.getUint16(offset + (i * 12) + 8, little));
+                        }
+                    }
+                } else if ((marker & 0xFF00) != 0xFF00) break;
+                else offset += view.getUint16(offset, false);
+            }
+            resolve(1);
+        };
+        reader.readAsArrayBuffer(file.slice(0, 64 * 1024));
+    });
+}
+
+async function compressImage(file) {
+    const orientation = await getOrientation(file);
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let w = img.width, h = img.height, max = 1200;
+                if (orientation >= 5 && orientation <= 8) {
+                    [w, h] = [h, w];
+                }
+                if (w > max || h > max) {
+                    if (w > h) { h = (h * max) / w; w = max; }
+                    else { w = (w * max) / h; h = max; }
+                }
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.save();
+                switch (orientation) {
+                    case 2: ctx.transform(-1, 0, 0, 1, w, 0); break;
+                    case 3: ctx.transform(-1, 0, 0, -1, w, h); break;
+                    case 4: ctx.transform(1, 0, 0, -1, 0, h); break;
+                    case 5: ctx.transform(0, 1, 1, 0, 0, 0); break;
+                    case 6: ctx.transform(0, 1, -1, 0, w, 0); break;
+                    case 7: ctx.transform(0, -1, -1, 0, w, h); break;
+                    case 8: ctx.transform(0, -1, 1, 0, 0, h); break;
+                    default: break;
+                }
+                ctx.drawImage(img, 0, 0);
+                ctx.restore();
+                canvas.toBlob(blob => resolve(new File([blob], file.name, { type:'image/jpeg' })), 'image/jpeg', 0.8);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+async function uploadImage(file, tempId) {
+    const compressed = await compressImage(file);
+    const fileName = `${tempId}_${Date.now()}.jpg`;
+    const { error } = await _supabase.storage.from(STORAGE_BUCKET).upload(fileName, compressed);
+    if (error) throw new Error(error.message);
+    const { data: { publicUrl } } = _supabase.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
+    return publicUrl;
+}
+
+// ==================== MESSAGE ELEMENT CREATION ====================
+function createMessageElement(msg, isMine, isFailed = false, isPending = false) {
+    const div = document.createElement('div');
+    div.className = `message ${isMine ? 'mine' : 'other'}${isFailed ? ' failed' : ''}`;
+    div.setAttribute('data-id', msg.id);
+    if (isPending) {
+        div.setAttribute('data-pending', 'true');
+        div.setAttribute('data-sending', 'true'); // 🔥 KEY FIX: marker for sending
+    }
+    let imgHtml = '';
+    if (msg.image_url && msg.image_url !== 'uploading...') {
+        imgHtml = `<img class="message-image" src="${msg.image_url}" style="max-width:150px; margin-top:5px; cursor:pointer;">`;
+    } else if (msg.image_url === 'uploading...') {
+        imgHtml = `<div class="uploading-indicator" style="margin-top:5px; font-size:0.7rem;"><i class="fas fa-spinner fa-pulse"></i> Uploading...</div>`;
+    }
+    const content = msg.message || '';
+    const editedHtml = msg.edited_at ? '<span class="edited-badge">(edited)</span>' : '';
+    const isOwner = (msg.session_id === currentSessionId);
+    let actionButtons = `
+        <button class="message-menu-btn copy-btn"><i class="fas fa-copy"></i></button>
+        ${isOwner && !msg.is_deleted ? `<button class="message-menu-btn edit-btn"><i class="fas fa-edit"></i></button>` : ''}
+        ${isOwner && !msg.is_deleted ? `<button class="message-menu-btn delete-btn"><i class="fas fa-trash-alt"></i></button>` : ''}
+    `;
+    if (isFailed) {
+        actionButtons += `<button class="message-menu-btn retry-btn"><i class="fas fa-redo-alt"></i></button>`;
+    }
+    div.innerHTML = `
+        <div class="message-header">
+            <span class="message-sender ${isMine ? 'me' : ''}">${escapeHtml(msg.username)}</span>
+            <span class="message-time">${formatTime(msg.created_at)}</span>
+            ${editedHtml}
+            ${actionButtons}
+        </div>
+        <div class="message-content">${escapeHtml(content)}</div>
+        ${imgHtml}
+    `;
+    div.querySelector('.copy-btn')?.addEventListener('click', e => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(msg.message || '');
+        showToast('Copied');
+    });
+    div.querySelector('.edit-btn')?.addEventListener('click', e => {
+        e.stopPropagation();
+        activeMessageId = msg.id;
+        editInput.value = msg.message || '';
+        editModal.style.display = 'flex';
+    });
+    div.querySelector('.delete-btn')?.addEventListener('click', e => {
+        e.stopPropagation();
+        activeMessageId = msg.id;
+        deleteModal.style.display = 'flex';
+    });
+    const imgEl = div.querySelector('.message-image');
+    if (imgEl) imgEl.addEventListener('click', () => openLightbox(msg.image_url));
+    return div;
+}
+
+function replaceMessageElement(msg, isMine) {
+    const oldDiv = document.querySelector(`.message[data-id="${msg.id}"]`);
+    const newDiv = createMessageElement(msg, isMine);
+    if (oldDiv) oldDiv.replaceWith(newDiv);
+    else messagesDiv.appendChild(newDiv);
+    scrollToBottom();
+}
+
+// ==================== LOAD MESSAGES ====================
+async function loadMessages() {
+    const { data, error } = await _supabase
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: true })
+        .limit(10000);
+    if (error) { console.error(error); showToast('Error loading messages'); return; }
+    messagesDiv.innerHTML = '';
+    if (!data || data.length === 0) {
+        messagesDiv.innerHTML = '<div style="text-align:center;padding:30px"><i class="fas fa-comment-dots"></i><h3>Be the first to say something!</h3></div>';
+        return;
+    }
+    data.forEach(msg => {
+        const isMine = (msg.session_id === currentSessionId);
+        messagesDiv.appendChild(createMessageElement(msg, isMine));
+    });
+    scrollToBottom();
+    await updateBadgeCount();
+}
+
+// ==================== REALTIME (FIXED – No Duplicates) ====================
+function setupRealtime() {
+    if (realtimeChannel) {
+        _supabase.removeChannel(realtimeChannel);
+    }
+    realtimeChannel = _supabase.channel('public:messages');
+    realtimeChannel
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+            const newMsg = payload.new;
+            const isMine = (newMsg.session_id === currentSessionId);
+
+            console.log('📨 Realtime INSERT:', newMsg.id, isMine ? '(mine)' : '(other)');
+
+            // 🔥 If it's my message, check for sending element
+            if (isMine) {
+                const sendingEl = document.querySelector('.message.mine[data-sending="true"]');
+                if (sendingEl) {
+                    const contentEl = sendingEl.querySelector('.message-content');
+                    if (contentEl && contentEl.textContent === (newMsg.message || '')) {
+                        console.log('✅ Replaced sending via Realtime');
+                        const realEl = createMessageElement(newMsg, true);
+                        sendingEl.replaceWith(realEl);
+                        scrollToBottom();
+                        return;
+                    }
+                }
+                // If no sending element, check if already displayed
+                if (document.querySelector(`.message[data-id="${newMsg.id}"]`)) {
+                    console.log('⏭️ Skipping duplicate (ID exists)');
+                    return;
+                }
+                // Otherwise, add it (should not happen often)
+                console.log('📨 Adding own message (no sending element)');
+                messagesDiv.appendChild(createMessageElement(newMsg, true));
+                scrollToBottom();
+                return;
+            }
+
+            // Not mine – add normally
+            if (document.querySelector(`.message[data-id="${newMsg.id}"]`)) {
+                console.log('⏭️ Skipping duplicate (ID exists)');
+                return;
+            }
+            console.log('📨 Adding message from:', newMsg.username);
+            messagesDiv.appendChild(createMessageElement(newMsg, false));
+            scrollToBottom();
+            updateBadgeCount();
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, payload => {
+            const isMine = (payload.new.session_id === currentSessionId);
+            replaceMessageElement(payload.new, isMine);
+        })
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, payload => {
+            const el = document.querySelector(`.message[data-id="${payload.old.id}"]`);
+            if (el) el.remove();
+        })
+        .subscribe((status, err) => {
+            console.log('📡 Realtime status:', status);
+            if (status === 'SUBSCRIBED') {
+                console.log('✅ Realtime connected!');
+            } else if (status === 'CHANNEL_ERROR' || err) {
+                console.warn('⚠️ Realtime error, reconnecting...', err);
+                setTimeout(() => setupRealtime(), 3000);
+            }
+        });
+}
+
+// ==================== FALLBACK POLLING (faster: 5 seconds) ====================
+function startFallbackPolling() {
+    if (fallbackInterval) clearInterval(fallbackInterval);
+    fallbackInterval = setInterval(async () => {
+        const { data, error } = await _supabase
+            .from('messages')
+            .select('id')
+            .order('created_at', { ascending: false })
+            .limit(1);
+        if (error) return;
+        const latestMsgId = data?.[0]?.id;
+        const lastDisplayedId = messagesDiv.querySelector('.message:last-child')?.getAttribute('data-id');
+        if (latestMsgId && latestMsgId !== lastDisplayedId) {
+            console.log('🔄 Fallback: new messages detected, reloading...');
+            await loadMessages();
+            updateBadgeCount();
+        }
+    }, 5000);
+}
+
+// ==================== SEND MESSAGE (FIXED – uses data-sending) ====================
+async function sendMessage() {
+    if (!currentUser) { showToast('Set your name first'); return; }
+    const text = messageInput.value.trim();
+    const imageToSend = currentImageFile;
+    if (!text && !imageToSend) return;
+
+    const tempId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const hasImage = !!imageToSend;
+
+    // 1. Insert optimistic bubble immediately (with pending & sending flags)
+    const optimisticMsg = {
+        id: tempId,
+        username: currentUser,
+        message: text || '',
+        image_url: hasImage ? 'uploading...' : null,
+        created_at: now,
+        session_id: currentSessionId,
+        edited_at: null,
+        is_deleted: false
+    };
+    const optimisticElement = createMessageElement(optimisticMsg, true, false, true);
+    messagesDiv.appendChild(optimisticElement);
+    scrollToBottom();
+
+    // 2. Clear input & re‑enable controls RIGHT AWAY
+    messageInput.value = '';
+    charCountSpan.textContent = '0/500';
+    clearImagePreview();
+    imageFile.value = '';
+    currentImageFile = null;
+
+    sendMsgBtn.disabled = false;
+    messageInput.disabled = false;
+    if (imagePicker) imagePicker.disabled = false;
+    messageInput.focus();
+
+    // 3. Background upload + insert
+    try {
+        let imageUrl = null;
+        if (hasImage) {
+            imageUrl = await uploadImage(imageToSend, tempId);
+            const imgIndicator = optimisticElement.querySelector('.uploading-indicator');
+            if (imgIndicator) {
+                const img = document.createElement('img');
+                img.className = 'message-image';
+                img.src = imageUrl;
+                img.style.cssText = 'max-width:150px; margin-top:5px; cursor:pointer;';
+                img.addEventListener('click', () => openLightbox(imageUrl));
+                imgIndicator.replaceWith(img);
+            }
+        }
+        const { data: inserted, error } = await _supabase
+            .from('messages')
+            .insert([{
+                username: currentUser,
+                message: text || '',
+                image_url: imageUrl || null,
+                created_at: now,
+                session_id: currentSessionId,
+                is_deleted: false
+            }])
+            .select();
+        if (error) throw error;
+        const realMsg = inserted[0];
+
+        // 🔥 Find the sending element and replace it
+        const sendingEl = document.querySelector('.message.mine[data-sending="true"]');
+        if (sendingEl) {
+            const realElement = createMessageElement(realMsg, true);
+            sendingEl.replaceWith(realElement);
+            console.log('✅ Replaced sending message (direct)');
+        } else {
+            // Fallback: use replaceMessageElement
+            replaceMessageElement(realMsg, true);
+        }
+        scrollToBottom();
+    } catch (err) {
+        console.error(err);
+        optimisticElement.classList.add('failed');
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'message-menu-btn retry-btn';
+        retryBtn.innerHTML = '<i class="fas fa-redo-alt"></i>';
+        retryBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showToast('Tap to retry – message not sent.');
+        });
+        const header = optimisticElement.querySelector('.message-header');
+        if (header) header.appendChild(retryBtn);
+        showToast('Failed to send. Tap retry or try again.');
+    }
+}
+
+// ==================== EDIT & DELETE ====================
+editConfirm.onclick = async () => {
+    const newText = editInput.value.trim();
+    if (newText) {
+        const { error } = await _supabase
+            .from('messages')
+            .update({ message: newText, edited_at: new Date().toISOString() })
+            .eq('id', activeMessageId);
+        if (error) showToast('Edit failed: ' + error.message);
+        else showToast('Message edited');
+    }
+    editModal.style.display = 'none';
+};
+editCancel.onclick = () => editModal.style.display = 'none';
+
+deleteConfirm.onclick = async () => {
+    const { error } = await _supabase
+        .from('messages')
+        .delete()
+        .eq('id', activeMessageId);
+    if (error) showToast('Delete failed: ' + error.message);
+    else showToast('Message permanently deleted');
+    deleteModal.style.display = 'none';
+};
+deleteCancel.onclick = () => deleteModal.style.display = 'none';
+window.onclick = e => {
+    if (e.target === editModal) editModal.style.display = 'none';
+    if (e.target === deleteModal) deleteModal.style.display = 'none';
+};
+
+// ==================== IMAGE PREVIEW ====================
+function handleImageSelect(file) {
+    currentImageFile = file;
+    const reader = new FileReader();
+    reader.onload = e => {
+        previewImg.src = e.target.result;
+        previewFileName.textContent = file.name;
+        previewSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
+        previewArea.style.display = 'flex';
+    };
+    reader.readAsDataURL(file);
+}
+function clearImagePreview() {
+    currentImageFile = null;
+    previewArea.style.display = 'none';
+    previewImg.src = '';
+    imageFile.value = '';
+}
+
+// ==================== SAVE NAME ====================
+async function saveName() {
+    const name = nameInput.value.trim();
+    if (!name) { showToast('Please enter a name'); return; }
+    currentUser = name;
+    if (!currentSessionId) {
+        let stored = localStorage.getItem('globalChatSessionId');
+        if (!stored) {
+            stored = crypto.randomUUID();
+            localStorage.setItem('globalChatSessionId', stored);
+        }
+        currentSessionId = stored;
+        sessionStorage.setItem('globalChatSessionId', stored);
+    }
+    localStorage.setItem('globalChatName', name);
+    sessionStorage.setItem('globalChatName', name);
+    messageInput.disabled = false;
+    sendMsgBtn.disabled = false;
+    if (imagePicker) imagePicker.disabled = false;
+    nameStatus.innerHTML = `<i class="fas fa-check-circle"></i> <span>Chatting as ${escapeHtml(name)}</span><br><small style="font-size:0.6rem;">(Your identity is stored locally on this device)</small>`;
+    await loadMessages();
+    setupRealtime();
+    startFallbackPolling();
+    showToast(`Welcome ${name}!`);
+
+    // Show refresh button after name is set
+    refreshBtn.style.display = 'block';
+
+    // Request push permission immediately (user gesture)
+    if ('serviceWorker' in navigator && swRegistration) {
+        if (Notification.permission === 'default') {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                await subscribeToPush();
+            } else {
+                showToast('Notification permission denied.');
+            }
+        } else if (Notification.permission === 'granted' && !isPushSubscribed) {
+            await subscribeToPush();
+        }
+    } else {
+        // If swRegistration not ready, retry after short delay
+        console.warn('SW not ready at saveName time, retrying in 2s');
+        setTimeout(async () => {
+            if (swRegistration && Notification.permission === 'granted' && !isPushSubscribed) {
+                await subscribeToPush();
+            }
+        }, 2000);
+    }
+}
+
+// ==================== LIGHTBOX & SHARE / DOWNLOAD ====================
+function openLightbox(url) {
+    lightboxImg.src = url;
+    lightbox.style.display = 'flex';
+    lightboxImg.setAttribute('data-url', url);
+}
+function closeLightbox() { lightbox.style.display = 'none'; }
+
+async function shareImage() {
+    const url = lightboxImg.getAttribute('data-url') || lightboxImg.src;
+    if (!url) return;
+    try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const file = new File([blob], 'chat-image.jpg', { type: blob.type || 'image/jpeg' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file] });
+        } else {
+            downloadImage();
+        }
+    } catch (err) {
+        if (err.name !== 'AbortError') {
+            showToast('Share failed – try download instead');
+        }
+    }
+}
+
+function downloadImage() {
+    const url = lightboxImg.getAttribute('data-url') || lightboxImg.src;
+    if (!url) return;
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'chat-image.jpg';
+    link.click();
+}
+
+// ==================== KEYBOARD & VISIBILITY ====================
+if (window.visualViewport) {
+    visualViewport.addEventListener('resize', () => {
+        if (visualViewport.height < window.innerHeight * 0.8) {
+            scrollToBottom();
+        }
+    });
+}
+nameInput.addEventListener('focus', () => {
+    setTimeout(() => {
+        nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
+});
+document.addEventListener('focusin', (e) => {
+    if (e.target === messageInput) {
+        scrollToBottom();
+    }
+});
+
+window.addEventListener('online', () => {
+    showToast('Back online! Syncing…');
+    loadMessages();
+    setupRealtime();
+    startFallbackPolling();
+});
+window.addEventListener('offline', () => {
+    showToast('You are offline. Messages may not send.');
+});
+
+// Visibility change: clear badge and refresh messages when returning
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        // Mark messages as seen
+        localStorage.setItem('lastSeenTimestamp', new Date().toISOString());
+        if (navigator.clearAppBadge) {
+            navigator.clearAppBadge();
+        }
+        loadMessages();
+        setupRealtime();
+    }
+});
+
+// ==================== SERVICE WORKER ====================
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+        swRegistration = reg;
+        console.log('Service Worker registered', reg);
+        reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    showToast('Update available – refresh to get the latest version');
+                    reloadBtn.style.background = '#f72585';
+                }
+            });
+        });
+    }).catch(err => console.error('SW registration failed', err));
+}
+
+// ==================== PWA INSTALL PROMPT ====================
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'block';
+    installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                deferredPrompt = null;
+                installBtn.style.display = 'none';
+            }
+        }
+    });
+});
+
+// ==================== EVENT LISTENERS ====================
+saveNameBtn.addEventListener('click', saveName);
+sendMsgBtn.addEventListener('click', sendMessage);
+messageInput.addEventListener('input', () => { charCountSpan.textContent = `${messageInput.value.length}/500`; });
+messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+imagePicker.addEventListener('click', () => imageFile.click());
+imageFile.addEventListener('change', e => { if (e.target.files[0]) handleImageSelect(e.target.files[0]); });
+cancelImg.addEventListener('click', clearImagePreview);
+lightboxClose.addEventListener('click', closeLightbox);
+lightboxDownload.addEventListener('click', downloadImage);
+lightboxShare.addEventListener('click', shareImage);
+lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+reloadBtn.addEventListener('click', () => location.reload());
+refreshBtn.addEventListener('click', () => {
+    showToast('🔄 Refreshing messages...');
+    loadMessages();
+});
+
+// ==================== INIT ====================
+const savedName = localStorage.getItem('globalChatName') || sessionStorage.getItem('globalChatName');
+const savedSession = localStorage.getItem('globalChatSessionId') || sessionStorage.getItem('globalChatSessionId');
+if (savedName) {
+    nameInput.value = savedName;
+    if (savedSession) currentSessionId = savedSession;
+    saveName();
+} else {
+    messageInput.disabled = true;
+    sendMsgBtn.disabled = true;
+    if (imagePicker) imagePicker.disabled = true;
+}
+</script>
+</body>
+</html>

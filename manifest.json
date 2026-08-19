@@ -1,0 +1,25 @@
+{
+  "name": "Global Chat",
+  "short_name": "Global Chat",
+  "description": "Real-time global chat with images, edit/delete, offline support.",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#4361ee",
+  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

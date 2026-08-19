@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - Global Chat</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+        .offline-card {
+            background: white;
+            border-radius: 28px;
+            padding: 32px;
+            text-align: center;
+            max-width: 300px;
+            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.2);
+        }
+        /* ✅ Fix 5: Emoji instead of Font Awesome icon */
+        .offline-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+        p { color: #6c757d; margin-bottom: 1.5rem; }
+        button {
+            background: #4361ee;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-card">
+        <div class="offline-icon">📡</div>
+        <h1>You're offline</h1>
+        <p>Connect to the internet to continue chatting.</p>
+        <button onclick="location.reload()">Try again</button>
+    </div>
+</body>
+</html>
