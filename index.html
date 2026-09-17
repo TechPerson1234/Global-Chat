@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <title>Global Chat | math12393</title>
 
-    <!-- PWA Manifest & Theme -->
+   
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4361ee">
     <meta name="mobile-web-app-capable" content="yes">
@@ -160,7 +160,7 @@
         .send-btn{background:linear-gradient(135deg,#4361ee,#7209b7);border:none;width:44px;height:44px;border-radius:50%;color:#fff;cursor:pointer}
         .char-count{font-size:.7rem;color:#6c757d;margin-left:8px}
 
-        /* ========== LIGHTBOX (bottom toolbar) ========== */
+     
         .lightbox{
             position:fixed;top:0;left:0;width:100%;height:100%;
             background:rgba(0,0,0,0.95);z-index:2000;
@@ -190,7 +190,7 @@
         }
         .lightbox-toolbar button:active{transform:scale(0.92)}
 
-        /* ========== MODALS ========== */
+       
         .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:3000;display:flex;justify-content:center;align-items:center}
         .modal-box{background:#fff;border-radius:20px;padding:24px;width:90%;max-width:350px;text-align:center}
         .modal-box textarea{width:100%;padding:12px;margin:16px 0;border:2px solid #e9ecef;border-radius:12px;font-size:16px;font-family:inherit}
@@ -199,18 +199,18 @@
         .modal-confirm{background:#4361ee;color:#fff}
         .modal-cancel{background:#e9ecef}
 
-        /* ========== TOAST ========== */
+        
         .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;padding:8px 16px;border-radius:30px;font-size:.9rem;z-index:4000;opacity:0;transition:.2s;pointer-events:none}
         .toast.show{opacity:1}
 
-        /* ========== FAILED MESSAGE STYLE ========== */
+
         .message.failed .message-content{background:#adb5bd;color:#fff;opacity:0.7}
         .retry-btn{background:#f72585;border:none;width:24px;height:24px;border-radius:50%;color:#fff;cursor:pointer;margin-left:4px}
 
         @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
         button:active{transform:scale(0.96)}
 
-        /* ========== RESPONSIVE ========== */
+      
         @media (max-width: 400px) {
             .chat-header {
                 flex-direction: column;
@@ -278,7 +278,7 @@
     </div>
 </div>
 
-<!-- ========== LIGHTBOX (bottom toolbar) ========== -->
+
 <div id="lightbox" class="lightbox" style="display:none">
     <div class="lightbox-content"><img id="lightboxImg"></div>
     <div class="lightbox-toolbar">
@@ -297,13 +297,12 @@
 <div id="toast" class="toast"></div>
 
 <script>
-// ==================== SUPABASE ====================
+
 const _SUPABASE_URL = 'https://mpxirhokmfvlpijjqstv.supabase.co';
 const _SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1weGlyaG9rbWZ2bHBpampxc3R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2NDA0MjQsImV4cCI6MjA5OTIxNjQyNH0.KHXjRtVKuQd07HLcrClSmGAOGbYxhZghV5kdldcZ3JI';
 const _supabase = window.supabase.createClient(_SUPABASE_URL, _SUPABASE_KEY);
 const STORAGE_BUCKET = 'chat-images';
-
-// ==================== PUSH NOTIFICATIONS ====================
+    
 const VAPID_PUBLIC_KEY = 'BPGNixgR1xxYKgDhkNYeor0rRPGiLNFfh_jmjWE2B02xOF1iNq3O4Ehp4Pvim31iZkJlpshweqzLMImeBkJg1eg';
 let swRegistration = null;
 let isPushSubscribed = false;
@@ -400,7 +399,7 @@ async function updateBadgeCount() {
   }
 }
 
-// ==================== GLOBAL STATE ====================
+
 let currentUser = null;
 let currentSessionId = null;
 let currentImageFile = null;
@@ -408,7 +407,7 @@ let activeMessageId = null;
 let realtimeChannel = null;
 let fallbackInterval = null;
 
-// DOM elements
+
 const nameInput = document.getElementById('nameInput');
 const saveNameBtn = document.getElementById('saveNameBtn');
 const nameStatus = document.getElementById('nameStatus');
@@ -440,7 +439,7 @@ const deleteModal = document.getElementById('deleteModal');
 const deleteConfirm = document.getElementById('deleteConfirmBtn');
 const deleteCancel = document.getElementById('deleteCancelBtn');
 
-// ==================== iOS VIEWPORT HEIGHT FIX ====================
+
 function setVH() {
     let vh = window.innerHeight * 0.01;
     document.documentElement.style.setProperty('--vh', `${vh}px`);
@@ -451,7 +450,7 @@ setTimeout(setVH, 100);
 window.addEventListener('pageshow', setVH);
 setVH();
 
-// ==================== UTILITIES ====================
+
 function showToast(msg) {
     toast.textContent = msg;
     toast.classList.add('show');
@@ -473,7 +472,7 @@ function scrollToBottom() {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// ==================== IMAGE HANDLING (with EXIF orientation fix) ====================
+
 function getOrientation(file) {
     return new Promise((resolve) => {
         const reader = new FileReader();
@@ -554,14 +553,13 @@ async function uploadImage(file, tempId) {
     return publicUrl;
 }
 
-// ==================== MESSAGE ELEMENT CREATION ====================
 function createMessageElement(msg, isMine, isFailed = false, isPending = false) {
     const div = document.createElement('div');
     div.className = `message ${isMine ? 'mine' : 'other'}${isFailed ? ' failed' : ''}`;
     div.setAttribute('data-id', msg.id);
     if (isPending) {
         div.setAttribute('data-pending', 'true');
-        div.setAttribute('data-sending', 'true'); // 🔥 KEY FIX: marker for sending
+        div.setAttribute('data-sending', 'true'); 
     }
     let imgHtml = '';
     if (msg.image_url && msg.image_url !== 'uploading...') {
@@ -619,7 +617,7 @@ function replaceMessageElement(msg, isMine) {
     scrollToBottom();
 }
 
-// ==================== LOAD MESSAGES ====================
+
 async function loadMessages() {
     const { data, error } = await _supabase
         .from('messages')
@@ -640,7 +638,7 @@ async function loadMessages() {
     await updateBadgeCount();
 }
 
-// ==================== REALTIME (FIXED – No Duplicates) ====================
+
 function setupRealtime() {
     if (realtimeChannel) {
         _supabase.removeChannel(realtimeChannel);
@@ -653,7 +651,7 @@ function setupRealtime() {
 
             console.log('📨 Realtime INSERT:', newMsg.id, isMine ? '(mine)' : '(other)');
 
-            // 🔥 If it's my message, check for sending element
+          
             if (isMine) {
                 const sendingEl = document.querySelector('.message.mine[data-sending="true"]');
                 if (sendingEl) {
@@ -666,19 +664,18 @@ function setupRealtime() {
                         return;
                     }
                 }
-                // If no sending element, check if already displayed
+                
                 if (document.querySelector(`.message[data-id="${newMsg.id}"]`)) {
                     console.log('⏭️ Skipping duplicate (ID exists)');
                     return;
                 }
-                // Otherwise, add it (should not happen often)
+                
                 console.log('📨 Adding own message (no sending element)');
                 messagesDiv.appendChild(createMessageElement(newMsg, true));
                 scrollToBottom();
                 return;
             }
 
-            // Not mine – add normally
             if (document.querySelector(`.message[data-id="${newMsg.id}"]`)) {
                 console.log('⏭️ Skipping duplicate (ID exists)');
                 return;
@@ -707,7 +704,7 @@ function setupRealtime() {
         });
 }
 
-// ==================== FALLBACK POLLING (faster: 5 seconds) ====================
+
 function startFallbackPolling() {
     if (fallbackInterval) clearInterval(fallbackInterval);
     fallbackInterval = setInterval(async () => {
@@ -727,7 +724,7 @@ function startFallbackPolling() {
     }, 5000);
 }
 
-// ==================== SEND MESSAGE (FIXED – uses data-sending) ====================
+
 async function sendMessage() {
     if (!currentUser) { showToast('Set your name first'); return; }
     const text = messageInput.value.trim();
@@ -738,7 +735,7 @@ async function sendMessage() {
     const now = new Date().toISOString();
     const hasImage = !!imageToSend;
 
-    // 1. Insert optimistic bubble immediately (with pending & sending flags)
+    
     const optimisticMsg = {
         id: tempId,
         username: currentUser,
@@ -753,7 +750,7 @@ async function sendMessage() {
     messagesDiv.appendChild(optimisticElement);
     scrollToBottom();
 
-    // 2. Clear input & re‑enable controls RIGHT AWAY
+ 
     messageInput.value = '';
     charCountSpan.textContent = '0/500';
     clearImagePreview();
@@ -765,7 +762,7 @@ async function sendMessage() {
     if (imagePicker) imagePicker.disabled = false;
     messageInput.focus();
 
-    // 3. Background upload + insert
+  
     try {
         let imageUrl = null;
         if (hasImage) {
@@ -794,14 +791,14 @@ async function sendMessage() {
         if (error) throw error;
         const realMsg = inserted[0];
 
-        // 🔥 Find the sending element and replace it
+
         const sendingEl = document.querySelector('.message.mine[data-sending="true"]');
         if (sendingEl) {
             const realElement = createMessageElement(realMsg, true);
             sendingEl.replaceWith(realElement);
             console.log('✅ Replaced sending message (direct)');
         } else {
-            // Fallback: use replaceMessageElement
+         
             replaceMessageElement(realMsg, true);
         }
         scrollToBottom();
@@ -821,7 +818,7 @@ async function sendMessage() {
     }
 }
 
-// ==================== EDIT & DELETE ====================
+
 editConfirm.onclick = async () => {
     const newText = editInput.value.trim();
     if (newText) {
@@ -851,7 +848,7 @@ window.onclick = e => {
     if (e.target === deleteModal) deleteModal.style.display = 'none';
 };
 
-// ==================== IMAGE PREVIEW ====================
+
 function handleImageSelect(file) {
     currentImageFile = file;
     const reader = new FileReader();
@@ -870,7 +867,7 @@ function clearImagePreview() {
     imageFile.value = '';
 }
 
-// ==================== SAVE NAME ====================
+
 async function saveName() {
     const name = nameInput.value.trim();
     if (!name) { showToast('Please enter a name'); return; }
@@ -895,10 +892,9 @@ async function saveName() {
     startFallbackPolling();
     showToast(`Welcome ${name}!`);
 
-    // Show refresh button after name is set
     refreshBtn.style.display = 'block';
 
-    // Request push permission immediately (user gesture)
+    
     if ('serviceWorker' in navigator && swRegistration) {
         if (Notification.permission === 'default') {
             const permission = await Notification.requestPermission();
@@ -911,7 +907,7 @@ async function saveName() {
             await subscribeToPush();
         }
     } else {
-        // If swRegistration not ready, retry after short delay
+    
         console.warn('SW not ready at saveName time, retrying in 2s');
         setTimeout(async () => {
             if (swRegistration && Notification.permission === 'granted' && !isPushSubscribed) {
@@ -921,7 +917,7 @@ async function saveName() {
     }
 }
 
-// ==================== LIGHTBOX & SHARE / DOWNLOAD ====================
+
 function openLightbox(url) {
     lightboxImg.src = url;
     lightbox.style.display = 'flex';
@@ -957,7 +953,7 @@ function downloadImage() {
     link.click();
 }
 
-// ==================== KEYBOARD & VISIBILITY ====================
+
 if (window.visualViewport) {
     visualViewport.addEventListener('resize', () => {
         if (visualViewport.height < window.innerHeight * 0.8) {
@@ -986,10 +982,10 @@ window.addEventListener('offline', () => {
     showToast('You are offline. Messages may not send.');
 });
 
-// Visibility change: clear badge and refresh messages when returning
+
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-        // Mark messages as seen
+       
         localStorage.setItem('lastSeenTimestamp', new Date().toISOString());
         if (navigator.clearAppBadge) {
             navigator.clearAppBadge();
@@ -999,7 +995,7 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// ==================== SERVICE WORKER ====================
+
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').then(reg => {
         swRegistration = reg;
@@ -1016,7 +1012,7 @@ if ('serviceWorker' in navigator) {
     }).catch(err => console.error('SW registration failed', err));
 }
 
-// ==================== PWA INSTALL PROMPT ====================
+
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -1034,7 +1030,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
     });
 });
 
-// ==================== EVENT LISTENERS ====================
+
 saveNameBtn.addEventListener('click', saveName);
 sendMsgBtn.addEventListener('click', sendMessage);
 messageInput.addEventListener('input', () => { charCountSpan.textContent = `${messageInput.value.length}/500`; });
@@ -1052,7 +1048,7 @@ refreshBtn.addEventListener('click', () => {
     loadMessages();
 });
 
-// ==================== INIT ====================
+
 const savedName = localStorage.getItem('globalChatName') || sessionStorage.getItem('globalChatName');
 const savedSession = localStorage.getItem('globalChatSessionId') || sessionStorage.getItem('globalChatSessionId');
 if (savedName) {
