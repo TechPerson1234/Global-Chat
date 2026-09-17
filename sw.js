@@ -8,7 +8,7 @@ const STATIC_ASSETS = [
   'https://unpkg.com/@supabase/supabase-js@2'
 ];
 
-// Install – cache static assets
+
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
@@ -16,14 +16,13 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Listen for SKIP_WAITING message from the page
+
 self.addEventListener('message', event => {
   if (event.data === 'SKIP_WAITING') {
     self.skipWaiting();
   }
 });
 
-// Activate – clean old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
@@ -33,7 +32,7 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch – network first, fallback to cache
+
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (url.hostname.includes('supabase.co')) {
@@ -53,7 +52,7 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// ==================== PUSH NOTIFICATIONS ====================
+
 self.addEventListener('push', function(event) {
   console.log('📨 Push event received!', event);
   let data = {};
